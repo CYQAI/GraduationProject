@@ -67,7 +67,7 @@ void password_ChangeOrRead(PASSWORD_STATUS password_status)
         if(password_status == PasswordCHANGE)
         {
           my_StrCopy(password, password_form_key, 6);
-          flash_write(ADDR_FLASH_PAGE_60, ADDR_FLASH_PAGE_61, password, COUNTOF(password));
+          flash_write_password(ADDR_FLASH_PAGE_61, ADDR_FLASH_PAGE_62, password, COUNTOF(password));
         }
         else if (password_status == PasswordREAD)
         {
@@ -130,6 +130,9 @@ void first_use(void)
   LCD_ShowChinese(2*16, 3*16, "设置密码",RED,WHITE,16,0);
 
   password_ChangeOrRead(PasswordCHANGE);
+
+  //擦除设置密码
+  //录入管理员指纹
 }
 
 
@@ -146,13 +149,14 @@ void close_door(void)
 
 void door_task(void)
 {
-  uint8_t pass_fail_num=0;
-
+  uint8_t pass_fail_num=0;  /*密码错误的次数*/
+  int fr_ID=-1;             /*刷指纹时搜索到的用户ID（0-299）*/
+ 
   if (task_status !=  run_door_task)
     return;
 
 
-  LCD_Fill(0,0,LCD_W,LCD_H,WHITE);
+
   while (1)
   {
 
@@ -177,17 +181,34 @@ void door_task(void)
     else if (key.num  =='#')
     {
       task_status = run_ui_task;
+      LCD_Fill(0,0,LCD_W,LCD_H,WHITE);
       break;
     }
+
+    /*感应到有指纹*/
+    if (AS608_WAK_status == GPIO_PIN_SET)
+    {
+      printf("刷指纹中");
+      fr_ID = press_FR();
+      if (fr_ID != -1)
+      {
+        lock_status = as608_success;
+      }else
+      {
+        lock_status = as608_fail;
+      }
+      
+    }
+
     
-    /*对应不同开锁方式的状态*/
+    /*对应不同锁的状态*/
     switch (lock_status)
     {
     case password_success:
       open_door();
-
       lock_status = lock_unkown;
       break;
+
     case password_fail:
       if ( ++pass_fail_num == 3)
       {
@@ -200,6 +221,18 @@ void door_task(void)
       }
       lock_status = lock_unkown;
       break;
+
+    case as608_success:
+      open_door();
+      lock_status = lock_unkown;
+      break; 
+
+    case as608_fail:
+      LCD_ShowChinese(0*16, 4*16, "没有该用户",RED,WHITE,16,0);	
+      HAL_Delay(900);
+      LCD_Fill(0,4*16,LCD_W,5*16,WHITE);
+      lock_status = lock_unkown;
+      break; 
       
     default:
       break;

@@ -38,7 +38,7 @@ extern "C" {
 #define beep_toggle()   HAL_GPIO_TogglePin(BEEP_GPIO_Port, BEEP_Pin)
 #define relay_on()      HAL_GPIO_WritePin(RELAY_GPIO_Port, RELAY_Pin, GPIO_PIN_SET)
 #define relay_off()     HAL_GPIO_WritePin(RELAY_GPIO_Port, RELAY_Pin, GPIO_PIN_RESET)
-
+#define AS608_WAK_status  HAL_GPIO_ReadPin(GPIOB, AS608_WAK_Pin)
 /* USER CODE END Private defines */
 
 void MX_GPIO_Init(void);

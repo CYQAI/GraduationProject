@@ -7,6 +7,7 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "AS608_Func.h"
 
 /* Base address of the Flash pages */
 #define ADDR_FLASH_PAGE_0     ((uint32_t)0x08000000) /* Base @ of Page 0, 1 Kbytes */
@@ -138,9 +139,21 @@ extern "C" {
 #define ADDR_FLASH_PAGE_126   ((uint32_t)0x0801F800) /* Base @ of Page 126, 1 Kbytes */
 #define ADDR_FLASH_PAGE_127   ((uint32_t)0x0801FC00) /* Base @ of Page 127, 1 Kbytes */
 
+typedef enum 
+{
+    FLASH_PASSWORD,
+    FLASH_PEOPLE,
+}Flash_ID;
+
+
+
+
 void flash_init(void);
-void flash_write(uint32_t start_address, uint32_t end_adress, uint32_t from[], uint8_t size);
-void flash_read(uint32_t address, uint32_t to[], uint8_t size);
+void flash_write_people(uint32_t start_address, uint32_t end_adress, People from[], uint8_t size);
+void flash_write_password(uint32_t start_address, uint32_t end_adress, uint32_t from[], uint8_t size);
+void flash_read_password(uint32_t address, uint32_t to[], uint8_t size);
+void flash_read_people(uint32_t address, People to[], uint8_t size );
+
 
 #ifdef __cplusplus
 }

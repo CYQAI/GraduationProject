@@ -1,6 +1,7 @@
 
 #include "flash.h"
 #include "stdio.h"
+#include "AS608_Func.h"
 /* Private typedef -----------------------------------------------------------*/
 typedef enum {FAILED = 0, PASSED = !FAILED} TestStatus;
 /* Private define ------------------------------------------------------------*/
@@ -11,8 +12,8 @@ typedef enum {FAILED = 0, PASSED = !FAILED} TestStatus;
 /* Uncomment this line to Disable Write Protection */
 #define WRITE_PROTECTION_DISABLE
 
-#define FLASH_USER_START_ADDR       ADDR_FLASH_PAGE_60   /* Start @ of user Flash area */
-#define FLASH_USER_END_ADDR         ADDR_FLASH_PAGE_61   /* End @ of user Flash area */
+#define FLASH_USER_START_ADDR       ADDR_FLASH_PAGE_61   /* Start @ of user Flash area */
+#define FLASH_USER_END_ADDR         ADDR_FLASH_PAGE_63   /* End @ of user Flash area */
 #define FLASH_PAGE_TO_BE_PROTECTED (OB_WRP_PAGES60TO63)  
 
 #define DATA_32                     ((uint32_t)0x12345678)
@@ -109,15 +110,13 @@ void flash_init(void)
 
 }
 
-void flash_write(uint32_t start_address, uint32_t end_adress, uint32_t from[], uint8_t size)
+void flash_write_people(uint32_t start_address, uint32_t end_adress, People from[], uint8_t size)
 {
   // uint32_t Address = 0;
 
     /*size数值不是4的倍数返回*/
-    if((size%4)!= 0 && sizeof(from[0])!=4)
-    {
-      return;
-    } 
+  HAL_FLASH_Unlock();
+
   /* The selected pages are not write protected *******************************/
   if ((OptionsBytesStruct.WRPPage & FLASH_PAGE_TO_BE_PROTECTED) != 0x00)
   {
@@ -135,8 +134,66 @@ void flash_write(uint32_t start_address, uint32_t end_adress, uint32_t from[], u
       }
     }
 
-    /* FLASH Word program of DATA_32 at addresses defined by FLASH_USER_START_ADDR and FLASH_USER_END_ADDR */
-    // Address = start_address;
+
+    for(int i=0; i < size ; ++i)
+    {
+      if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, start_address, from[i].ID) == HAL_OK){
+        start_address += 4;
+      }else{
+        while (1)
+        {
+           printf("error in Write operation");
+        }
+      } 
+      if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, start_address, from[i].identity) == HAL_OK){
+        start_address += 4;
+      }else{
+        while (1)
+        {
+           printf("error in Write operation");
+        }
+      }
+
+    }
+
+  }
+  else
+  { 
+    printf("The selected pages are write protected");
+  }
+
+  HAL_FLASH_Lock();
+}
+
+void flash_write_password(uint32_t start_address, uint32_t end_adress, uint32_t from[], uint8_t size)
+{
+  // uint32_t Address = 0;
+
+    /*size数值不是4的倍数返回*/
+    if((size%4)!= 0 && sizeof(from[0])!=4)
+    {
+      return;
+    }
+    
+      HAL_FLASH_Unlock();
+
+  /* The selected pages are not write protected *******************************/
+  if ((OptionsBytesStruct.WRPPage & FLASH_PAGE_TO_BE_PROTECTED) != 0x00)
+  {
+    /* Fill EraseInit structure************************************************/
+    EraseInitStruct.TypeErase   = FLASH_TYPEERASE_PAGES;
+    EraseInitStruct.PageAddress = start_address;
+    EraseInitStruct.NbPages     = (end_adress - start_address)/FLASH_PAGE_SIZE;
+
+    if (HAL_FLASHEx_Erase(&EraseInitStruct, &PageError) != HAL_OK)
+    {
+
+      while (1)
+      {
+        printf("error in Erase operation"); 
+      }
+    }
+
 
     for(int i=0; i < size ; )
     {
@@ -164,30 +221,30 @@ void flash_write(uint32_t start_address, uint32_t end_adress, uint32_t from[], u
 }
 
 
-
-void flash_read(uint32_t address, uint32_t to[], uint8_t size)
+void flash_read_password(uint32_t address, uint32_t to[], uint8_t size)
 {
   uint8_t i=0;
   
-  /* Check the correctness of written data */
-  // Address = flash_user_start_addr;
-
   for(i=0;i<size;i++,address += 4)
   {
     to[i]=(*(__IO uint32_t*) address);
     // printf("to[%d]=%d\r\n", i, to[i]);
-  }
-
-  // while ((to[i]=(*(__IO uint32_t*) Address)) != '\0' )
-  // {
-  //  printf("to[%d]=%c\r\n", i, (*(__IO uint32_t*) Address)); 
-  //  i++;
-  //  Address += 4;
+  }  
    
-  // }
-
 }
 
+void flash_read_people(uint32_t address, People to[], uint8_t size )
+{
+  uint8_t i=0;
+
+  for(i=0;i<size;i++,address += 4)
+  {
+    to[i].ID=(*(__IO uint32_t*) address);
+    // printf("to[%d]=%d\r\n", i, to[i]);
+    address += 4;
+    to[i].identity=(*(__IO uint32_t*) address);
+  }
+}
 
 
 

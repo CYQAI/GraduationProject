@@ -2,6 +2,10 @@
 #include "lcd.h"
 #include "KEY.h"
 #include "main.h"
+#include "lcd_init.h"
+#include "AS608_Func.h"
+#include "gpio.h"
+
 Page *main_page;
 Page *last_page;
 //
@@ -249,8 +253,14 @@ void key_ctrl(void)
 }
 
 
+
+
+
 void UI_TASK(void)
 {
+    int fr_ID;
+    uint8_t admin_flag=1;
+
     if (task_status !=  run_ui_task)
         return;
 
@@ -259,104 +269,159 @@ void UI_TASK(void)
 		draw_list();
 	}
 
-    key_ctrl();
-
-    if(!choose_or_cancel_flag) onItemHover(select_id); //悬停效果
-
-    if(enter_flag)
+    /*UI工作状态*/
+    while (1)
     {
-        switch (main_page->list[select_id]->pointer)
+
+        get_key();
+
+        key_ctrl();
+
+        if(!choose_or_cancel_flag) onItemHover(select_id); //悬停效果
+
+        if(enter_flag)
         {
-            case PAGE:
+            switch (main_page->list[select_id]->pointer)
             {
-               
-                if(main_page->list[select_id]->func.point_page!=NULL)
+                case PAGE:
                 {
-                     push(main_page);//入栈 用来返回
-                     main_page=main_page->list[select_id]->func.point_page; //进入新页面
+                
+                    if(main_page->list[select_id]->func.point_page!=NULL)
+                    {
+                        push(main_page);//入栈 用来返回
+                        main_page=main_page->list[select_id]->func.point_page; //进入新页面
+                    }
+                    draw_list();//进入新页面重新画一下
+                    select_id=0;
+                    break;
                 }
-                draw_list();//进入新页面重新画一下
-                select_id=0;
-                break;
-            }
-            case FUNCTION:
-            {
-                if(main_page->list[select_id]->func.fun!=NULL)
+                case FUNCTION:
                 {
-                    main_page->list[select_id]->func.fun();
+                    if(main_page->list[select_id]->func.fun!=NULL)
+                    {
+                        main_page->list[select_id]->func.fun();
+                    }
+                    //提示执行成功
+                    break;
                 }
-                //提示执行成功
-                break;
+                case VALUE:break;
             }
-            case VALUE:break;
+            enter_flag=0;
         }
-        enter_flag=0;
-    }
-    else if(back_flag)
-    {
-        main_page=pop();//出栈 返回旧页面
-        draw_list();//返回旧页面重新画一下
-        back_flag=0;
-    }
-    else if(choose_or_cancel_flag)
-    {
-        if(choose_or_cancel_flag==1)
+        else if(back_flag)
         {
-            onItemSelect(select_id);//选择效果
-            if(main_page->list[select_id]->pointer==VALUE)
+            main_page=pop();//出栈 返回旧页面
+            draw_list();//返回旧页面重新画一下
+            back_flag=0;
+        }
+        else if(choose_or_cancel_flag)
+        {
+            if(choose_or_cancel_flag==1)
             {
-                value_set_flag=1;//设置变量
+                onItemSelect(select_id);//选择效果
+                if(main_page->list[select_id]->pointer==VALUE)
+                {
+                    value_set_flag=1;//设置变量
+                }
             }
         }
-    }
-    else if(!choose_or_cancel_flag)
-    {
-        value_set_flag=0;
-    }
+        else if(!choose_or_cancel_flag)
+        {
+            value_set_flag=0;
+        }
 
-    if(up_flag)
-    {
-        up_flag=0;
-        if(value_set_flag)
+        if(up_flag)
         {
-            //增加变量
-            if(main_page->list[select_id]->func.data.type==FLOAT)
+            up_flag=0;
+            if(value_set_flag)
             {
-                convert_float=(float*)(main_page->list[select_id]->func.data.value);
-                *convert_float=*convert_float + main_page->list[select_id]->func.data.increasement;
-            }else if(main_page->list[select_id]->func.data.type==INT)
+                //增加变量
+                if(main_page->list[select_id]->func.data.type==FLOAT)
+                {
+                    convert_float=(float*)(main_page->list[select_id]->func.data.value);
+                    *convert_float=*convert_float + main_page->list[select_id]->func.data.increasement;
+                }else if(main_page->list[select_id]->func.data.type==INT)
+                {
+                    convert_int=(int*)(main_page->list[select_id]->func.data.value);
+                    *convert_int=*convert_int + main_page->list[select_id]->func.data.increasement_int;
+                }
+                update_item(main_page->list[select_id]);//重画更新的item
+            }
+            else
             {
-                convert_int=(int*)(main_page->list[select_id]->func.data.value);
-                *convert_int=*convert_int + main_page->list[select_id]->func.data.increasement_int;
+                select_id++;
+                if(select_id>=ITEM_NUM) select_id=0;
             }
-            update_item(main_page->list[select_id]);//重画更新的item
         }
-        else
+        else if(down_flag)
         {
-            select_id++;
-            if(select_id>=ITEM_NUM) select_id=0;
-        }
-    }
-    else if(down_flag)
-    {
-        down_flag=0;
-        if(value_set_flag)
-        {
-            //减小变量
-             if(main_page->list[select_id]->func.data.type==FLOAT){
-                convert_float=(float*)(main_page->list[select_id]->func.data.value);
-                *convert_float=*convert_float - main_page->list[select_id]->func.data.increasement;
-            }else if(main_page->list[select_id]->func.data.type==INT){
-                convert_int=(int*)(main_page->list[select_id]->func.data.value);
-                *convert_int=*convert_int- main_page->list[select_id]->func.data.increasement_int;
+            down_flag=0;
+            if(value_set_flag)
+            {
+                //减小变量
+                if(main_page->list[select_id]->func.data.type==FLOAT){
+                    convert_float=(float*)(main_page->list[select_id]->func.data.value);
+                    *convert_float=*convert_float - main_page->list[select_id]->func.data.increasement;
+                }else if(main_page->list[select_id]->func.data.type==INT){
+                    convert_int=(int*)(main_page->list[select_id]->func.data.value);
+                    *convert_int=*convert_int- main_page->list[select_id]->func.data.increasement_int;
+                }
+                update_item(main_page->list[select_id]);//重画更新的item
             }
-            update_item(main_page->list[select_id]);//重画更新的item
+            else
+            {
+                if(select_id==0)select_id=ITEM_NUM-1;
+                else select_id--;
+                
+            }
         }
-        else
+
+        /*直接退出UI状态*/
+        if (key.num  == '#')
         {
-			if(select_id==0)select_id=ITEM_NUM-1;
-            else select_id--;
+end:            
+            task_status = run_door_task;
+            LCD_Fill(0,0,LCD_W,LCD_H,WHITE);
+            break;
+
+        }
+
+        /*UI工作状态的内部获取管理员状态*/
+        while (admin_flag)
+        {
+            LCD_ShowChinese(1.5*16, 5*16, "请管理员登入",RED,WHITE,16,0);
+            get_key();
+
+            if (key.num  == '#')
+                goto end;   
             
+                /*感应到有指纹*/
+            if ( AS608_WAK_status == GPIO_PIN_SET)
+            {
+                printf("刷指纹中");
+                fr_ID = press_FR();
+                if (fr_ID != -1)
+                {
+                    if ( is_people_admin(fr_ID) == 0 )
+                    {
+                        LCD_ShowChinese(0*16, 4*16, "登入成功",RED,WHITE,16,0);
+                        LCD_ShowChinese(0*16, 4*16, "管理员：",RED,WHITE,16,0);
+                        admin_flag = 0;
+                    }else
+                    {
+                         LCD_ShowChinese(0*16, 4*16, "该用户不是管理员",RED,WHITE,16,0);
+                    }
+                                       
+                }else
+                {
+                    LCD_ShowChinese(0*16, 4*16, "没有该用户",RED,WHITE,16,0);
+                }
+           
+            }
         }
+        
+
+
+
     }
 }

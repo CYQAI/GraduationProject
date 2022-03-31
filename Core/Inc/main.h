@@ -41,8 +41,13 @@ typedef enum
 {
   run_door_task,
   run_ui_task,
+  NO_run_task,
 }TASK_status;
 
+typedef struct {
+uint32_t ID;
+uint32_t identity;
+}People;
 
 /* USER CODE END ET */
 
@@ -50,11 +55,17 @@ typedef enum
 /* USER CODE BEGIN EC */
 extern uint32_t password[8];
 extern TASK_status task_status;
+extern People people[10];
+
+
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
 #define COUNTOF(__BUFFER__)   (sizeof(__BUFFER__) / sizeof(*(__BUFFER__)))
+#define FLASH_INIT 0
+
+
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/

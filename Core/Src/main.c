@@ -61,8 +61,8 @@
 
 /* USER CODE BEGIN PV */
 /*前六位密码，第7位是否已初始化标志*/
-uint32_t password[8] = {'1','2','3','4','5','6',1,0};
-
+uint32_t password[8] = {'1','2','3','4','5','6',0,0};
+People people[people_num];
 uint32_t test[8];
 TASK_status task_status;
 
@@ -121,19 +121,72 @@ int main(void)
   AS608_Init();
   init_ui();
 
+  LCD_Fill(0,0,LCD_W,LCD_H,WHITE);
+
   task_status = run_door_task;  /*默认先启动这个任务*/
  
 
-  // flash_write(ADDR_FLASH_PAGE_60, ADDR_FLASH_PAGE_61, password, COUNTOF(password));
-  flash_read(ADDR_FLASH_PAGE_60,password,COUNTOF(password));
+#if FLASH_INIT
 
-  string_Printf(password, COUNTOF(password));
+  people_init();
+
+  flash_write_password( ADDR_FLASH_PAGE_61,  ADDR_FLASH_PAGE_62,  password, COUNTOF(password) );
+  HAL_Delay(200);
+  flash_write_people( ADDR_FLASH_PAGE_62,  ADDR_FLASH_PAGE_63, people , COUNTOF(people));
+  HAL_Delay(200);
+  flash_read_password(ADDR_FLASH_PAGE_61, password, COUNTOF(password));
+  HAL_Delay(200);
+  flash_read_people( ADDR_FLASH_PAGE_62, people, COUNTOF(people) );
+  HAL_Delay(200);
+
+  printf("密码：");
+  for (uint8_t i = 0; i < COUNTOF(password); i++)
+  {
+    printf("|%d",password[i]);
+  }
+  printf("\r\n");
+
+  printf("people：");
+  for (uint8_t i = 0; i < COUNTOF(people); i++)
+  {
+    printf("|ID:%d,identity:%d",people[i].ID,people[i].identity);
+  }
+    printf("\r\n");
+
+  while (1)
+  {
+    // printf("FLASH_INIT 成功\r\n");
+  }
+  
+#else
+  
+  flash_read_password(ADDR_FLASH_PAGE_61, password, COUNTOF(password));
+  HAL_Delay(200);
+  flash_read_people( ADDR_FLASH_PAGE_62, people, COUNTOF(people) );
+  HAL_Delay(200);
+
+  printf("密码：");
+  for (uint8_t i = 0; i < COUNTOF(password); i++)
+  {
+    printf("|%d",password[i]);
+  }
+  printf("\r\n");
+
+  printf("people：");
+  for (uint8_t i = 0; i < COUNTOF(people); i++)
+  {
+    printf("|ID:%d,identity:%d",people[i].ID,people[i].identity);
+  }
+    printf("\r\n");
+
+#endif
+
 
   first_use();
 
-  flash_read(ADDR_FLASH_PAGE_60,password,COUNTOF(password));
+  // Add_FR();
 
-  string_Printf(password, COUNTOF(password));
+
 /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -154,6 +207,7 @@ int main(void)
     printf("个数\r\n" );
     door_task();
     UI_TASK();
+    
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
