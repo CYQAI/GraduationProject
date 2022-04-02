@@ -8,8 +8,9 @@
 
 Page *main_page;
 Page *last_page;
+uint8_t page_num = 0;
 //
-Page_stack page_stack={NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0};
+Page_stack page_stack={0,0,0,0,0,0,0,0,0};
 unsigned char first_in=1;//第一次加载
 unsigned char select_id=0;//当前选择id
 unsigned char enter_flag=0;//
@@ -45,19 +46,40 @@ void  screen_draw_txt(unsigned char x,unsigned char y,char *string)
 
 void push(Page * elem) 
 {
-    if(page_stack.size < STACK_SIZE)
-    {
+    // if(page_stack.size < STACK_SIZE)
+    // {
         //page_stack.page[page_stack.size++]=elem;
-        page_stack.page[page_stack.size++]=elem;
+        // printf("page_stack.size=%d\r\n",page_stack.size);
+        // page_stack.page[page_stack.size]=elem;
+        // ++page_stack.size;
+        // printf("page1:0x%x page1:0x%x size:%d",page_stack.page[0],page_stack.page[1],page_stack.size);
+    // }  
+    /*只能有两层*/
+    if (page_num < 1)
+    {
+        last_page = elem;
+        page_num =1;
     }
 }
 
 Page * pop()
 {
-    if(page_stack.size>0){
-        return page_stack.page[--page_stack.size];
+    // printf("page_stack.size=%d\r\n",page_stack.size);
+    // if(page_stack.size>0){
+        //  printf("page_stack.size=%d\r\n",page_stack.size);
+        // printf("page1:0x%x page1:0x%x size:%d",page_stack.page[0],page_stack.page[1],page_stack.size);    
+        // return page_stack.page[--page_stack.size];
+
+    // }
+    // return main_page;
+    /*只能有两层*/
+    if (page_num > 0)
+    {
+        page_num =0;
+        return last_page;
     }
     return main_page;
+
 }
 
 //初始化页面
@@ -177,6 +199,7 @@ void draw_list()
     screen_clear();
 
     draw_title();
+    printf("33333333333333");
     for(;i<main_page->count;i++)
         update_item(main_page->list[i]);
 }
@@ -258,20 +281,21 @@ void key_ctrl(void)
 
 void UI_TASK(void)
 {
-    int fr_ID;
     uint8_t admin_flag=1;
 
     if (task_status !=  run_ui_task)
         return;
 
-	if(first_in){
-		first_in=0;
-		draw_list();
-	}
+
 
     /*UI工作状态*/
     while (1)
     {
+
+        if(first_in){
+            first_in=0;
+            draw_list();
+        }
 
         get_key();
 
@@ -283,6 +307,7 @@ void UI_TASK(void)
         {
             switch (main_page->list[select_id]->pointer)
             {
+                
                 case PAGE:
                 {
                 
@@ -302,6 +327,7 @@ void UI_TASK(void)
                         main_page->list[select_id]->func.fun();
                     }
                     //提示执行成功
+                    draw_list();//进入新页面重新画一下
                     break;
                 }
                 case VALUE:break;
@@ -381,15 +407,30 @@ void UI_TASK(void)
         {
 end:            
             task_status = run_door_task;
+            first_in = 1;
             LCD_Fill(0,0,LCD_W,LCD_H,WHITE);
             break;
 
         }
 
+        if(admin_flag == 0)     /*处于退出内部获取管理员状态*/
+        {
+            if (main_page == &page1)
+            {
+                LCD_ShowChinese(1*16, 6*16, "管理员",RED,WHITE,16,0);
+                LCD_ShowString(4*16, 6*16, "ID:", RED,WHITE,16,0);
+                LCD_ShowIntNum(5.5*16, 6*16, people_ID_now, 3, RED, WHITE, 16);
+            }
+            
+
+        }
+
+
+
         /*UI工作状态的内部获取管理员状态*/
         while (admin_flag)
         {
-            LCD_ShowChinese(1.5*16, 5*16, "请管理员登入",RED,WHITE,16,0);
+            LCD_ShowChinese(0*16, 6*16, "请管理员登入",RED,WHITE,16,0);
             get_key();
 
             if (key.num  == '#')
@@ -399,22 +440,29 @@ end:
             if ( AS608_WAK_status == GPIO_PIN_SET)
             {
                 printf("刷指纹中");
-                fr_ID = press_FR();
-                if (fr_ID != -1)
+                people_ID_now = press_FR();
+                if (people_ID_now != -1)
                 {
-                    if ( is_people_admin(fr_ID) == 0 )
+                    if ( is_people_admin(people_ID_now) == 0 )
                     {
-                        LCD_ShowChinese(0*16, 4*16, "登入成功",RED,WHITE,16,0);
-                        LCD_ShowChinese(0*16, 4*16, "管理员：",RED,WHITE,16,0);
+                        LCD_Fill(0,6*16,LCD_W,7*16,WHITE);
+                        LCD_ShowChinese(1*16, 6*16, "管理员",RED,WHITE,16,0);
+                        LCD_ShowString(4*16, 6*16, "ID:", RED,WHITE,16,0);
+                        LCD_ShowIntNum(5.5*16, 6*16, people_ID_now, 3, RED, WHITE, 16);
                         admin_flag = 0;
+                        break;
                     }else
                     {
-                         LCD_ShowChinese(0*16, 4*16, "该用户不是管理员",RED,WHITE,16,0);
+                        LCD_ShowChinese(0*16, 6*16, "该用户不是管理员",RED,WHITE,16,0);
+                        HAL_Delay(800);
+                        LCD_Fill(0,6*16,LCD_W,7*16,WHITE);
                     }
                                        
                 }else
                 {
-                    LCD_ShowChinese(0*16, 4*16, "没有该用户",RED,WHITE,16,0);
+                    LCD_ShowChinese(0*16, 6*16, "没有该用户",RED,WHITE,16,0);
+                    HAL_Delay(800);
+                    LCD_Fill(0,6*16,LCD_W,7*16,WHITE);               
                 }
            
             }

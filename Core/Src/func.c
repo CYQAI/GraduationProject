@@ -45,7 +45,7 @@ void password_ChangeOrRead(PASSWORD_STATUS password_status)
   while (1)
   {
 
-    printf("key.num=%d,i=%d\r\n", key.num, i);
+    // printf("key.num=%d,i=%d\r\n", key.num, i);
     
     /*获取按键输入的密码*/
     if(key.num>='0'&&key.num<='9')
@@ -108,7 +108,6 @@ void password_ChangeOrRead(PASSWORD_STATUS password_status)
     }   
     
      get_key();
-     HAL_Delay(150);
   }
 }
 
@@ -159,15 +158,14 @@ void door_task(void)
 
   while (1)
   {
-
-    
+  
     LCD_ShowChinese(2*16, 2*16, "欢迎使用",RED,WHITE,16,0);
     LCD_ShowChinese(1.5*16, 3*16, "指纹密码锁",RED,WHITE,16,0);
 
 
     get_key();
 
-    printf("key.num=%d,pass_fail_num=%d\r\n", key.num,pass_fail_num);
+    // printf("key.num=%d,pass_fail_num=%d\r\n", key.num,pass_fail_num);
 
     /*切换到不同的状态*/
     if (key.num>='0'&&key.num<='9')
@@ -243,3 +241,4 @@ void door_task(void)
 
 
 }
+

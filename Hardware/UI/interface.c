@@ -1,5 +1,7 @@
 
 #include "user_interface.h"
+#include "AS608_Func.h"
+
 
 //用户接口
 char *item_content(Item *item)
@@ -20,34 +22,30 @@ int sss;
 void init_ui()
 {
     set_show_area(0,0,SCREEN_WIDTH,SCREEN_HEIGHT);//设置显示区域
-    init_page(&page1,"中景");//初始化页面 
-    // set_item_indexpage(&item1,&page2,"set pids");
-    set_item_indexpage(&item2,NULL,"set speed");
-    set_item_indexpage(&item3,NULL,"show img");
-    set_item_indexpage(&item4,NULL,"item4");
-    set_item_indexpage(&item5,NULL,"item5");
-    set_item_indexpage(&item6,NULL,"item6");
-	
-    // init_page(&page2,"PID"); //页面2
+   
+    init_page(&page1,"设置");//初始化页面 
+    set_item_indexpage(&item1,&page2,"添加用户");
+    set_item_indexpage(&item2,&page3,"查看用户");    
+    set_item_function(&item3,del_FR,"删除用户");
+    set_item_function(&item4,NULL,"更改密码");
+    page_add_item(&page1,&item1);
+    page_add_item(&page1,&item2);
+	page_add_item(&page1,&item3);
+	page_add_item(&page1,&item4); 
+
+    init_page(&page2,"添加用户"); //页面2
+    set_item_function(&item5,add_admin_people,"添加管理员用户");
+    set_item_function(&item6,add_common_people,"添加普通用户");
+    page_add_item(&page2,&item5);
+    page_add_item(&page2,&item6);
 
 
+    init_page(&page3,"查看用户"); //页面2
+    set_item_function(&item7,show_admin_people,"查看管理员用户");
+    set_item_function(&item8,show_common_people,"查看普通用户");
+    page_add_item(&page3,&item7);
+    page_add_item(&page3,&item8);
 
-
-    // init_page(&page3,"page3");//页面3
-
-    // set_item_indexpage(&item7,&page3,"item7");
-    // page_add_item(&page2,&item7);
-
-    // set_item_value_int(&item8,&sss,1,"num");
-    // page_add_item(&page3,&item8);
-
-    // //给page添加item选项
-    // page_add_item(&page1,&item1);
-	page_add_item(&page1,&item2);
-    page_add_item(&page1,&item3);
-	page_add_item(&page1,&item4);
-    page_add_item(&page1,&item5);
-    page_add_item(&page1,&item6);
     set_base_page(&page1);//设置主页
 }
 

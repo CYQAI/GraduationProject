@@ -8,7 +8,7 @@
 #define FLOAT            0
 #define INT              1
 
-#define NAME_SIZE        16
+#define NAME_SIZE        30
 #define STACK_SIZE       8
 #define SCREEN_HEIGHT    LCD_H       //屏幕高度
 #define SCREEN_WIDTH     LCD_W        //屏幕宽度
@@ -60,7 +60,9 @@ typedef struct Page_stack
     /* data */
 }Page_stack;
 
-typedef void (*FUNC)();
+typedef void (*FUNC)(void);
+
+extern Page page1;
 
 
 void set_item_value_float(Item *item,float *value,float incres,char *name);

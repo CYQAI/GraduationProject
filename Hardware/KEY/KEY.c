@@ -152,7 +152,14 @@ uint8_t Key_Scan(void)
 
 void get_key(void)
 {
-     key.num = Key_Scan();
+     uint8_t i = 0;
+     while (i++<2)
+     {
+          key.num = Key_Scan();
+          HAL_Delay(120);          
+     }
+     
+
 }
 
 

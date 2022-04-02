@@ -56,7 +56,7 @@ uint32_t identity;
 extern uint32_t password[8];
 extern TASK_status task_status;
 extern People people[10];
-
+extern int people_ID_now;
 
 /* USER CODE END EC */
 
@@ -64,6 +64,7 @@ extern People people[10];
 /* USER CODE BEGIN EM */
 #define COUNTOF(__BUFFER__)   (sizeof(__BUFFER__) / sizeof(*(__BUFFER__)))
 #define FLASH_INIT 0
+#define PEOPLE_MAX_COUNT  10
 
 
 /* USER CODE END EM */
