@@ -27,7 +27,7 @@ void first_use(void);
 void open_door(void);
 void close_door(void);
 void door_task(void);
-
+void password_change(void);
 #ifdef __cplusplus
 }
 #endif

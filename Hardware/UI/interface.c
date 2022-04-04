@@ -1,7 +1,7 @@
 
 #include "user_interface.h"
 #include "AS608_Func.h"
-
+#include "func.h"
 
 //用户接口
 char *item_content(Item *item)
@@ -27,7 +27,7 @@ void init_ui()
     set_item_indexpage(&item1,&page2,"添加用户");
     set_item_indexpage(&item2,&page3,"查看用户");    
     set_item_function(&item3,del_FR,"删除用户");
-    set_item_function(&item4,NULL,"更改密码");
+    set_item_function(&item4,password_change,"更改密码");
     page_add_item(&page1,&item1);
     page_add_item(&page1,&item2);
 	page_add_item(&page1,&item3);

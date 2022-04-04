@@ -7,7 +7,7 @@
 #include "main.h"
 #include "KEY.h"
 #include "math.h"
-
+#include "flash.h"
 /* Private variables ---------------------------------------------------------*/
 uint8_t ensure;
 uint16_t ValidN;
@@ -51,7 +51,7 @@ int Add_FR(uint8_t ID)
 		{
 			case 0:
 				i++;
-        		LCD_ShowChinese(0*16, 4*16, "请按指纹",RED,WHITE,16,0);
+        		LCD_ShowChinese(2*16, 4*16, "请按指纹",RED,WHITE,16,0);
 				ensure=PS_GetImage();
 				if(ensure==0x00) 
 				{
@@ -59,7 +59,7 @@ int Add_FR(uint8_t ID)
 					if(ensure==0x00)
 					{
 						LCD_Fill(0,4*16,LCD_W,5*16,WHITE);
-            			LCD_ShowChinese(0*16, 4*16, "指纹正常",RED,WHITE,16,0);
+            			LCD_ShowChinese(2*16, 4*16, "指纹正常",RED,WHITE,16,0);
 						i=0;
 						processnum=1;//跳到第二步						
 					}else ShowErrMessage(ensure);				
@@ -69,7 +69,7 @@ int Add_FR(uint8_t ID)
 			case 1:
 				i++;
 				LCD_Fill(0,4*16,LCD_W,5*16,WHITE);
-        		LCD_ShowChinese(0*16, 4*16, "请再按一次指纹",RED,WHITE,16,0);
+        		LCD_ShowChinese(0.5*16, 4*16, "请再按一次指纹",RED,WHITE,16,0);
 				ensure=PS_GetImage();
 				if(ensure==0x00) 
 				{
@@ -77,7 +77,7 @@ int Add_FR(uint8_t ID)
 					if(ensure==0x00)
 					{
 						LCD_Fill(0,4*16,LCD_W,5*16,WHITE);
-           				LCD_ShowChinese(0*16, 4*16, "指纹正常",RED,WHITE,16,0);
+           				LCD_ShowChinese(2*16, 4*16, "指纹正常",RED,WHITE,16,0);
 						i=0;
 						processnum=2;//跳到第三步
 					}else ShowErrMessage(ensure);	
@@ -86,7 +86,7 @@ int Add_FR(uint8_t ID)
 
 			case 2:
 				LCD_Fill(0,4*16,LCD_W,5*16,WHITE);
-        		LCD_ShowChinese(0*16, 4*16, "对比两次指纹",RED,WHITE,16,0);
+        		LCD_ShowChinese(1*16, 4*16, "对比两次指纹",RED,WHITE,16,0);
 				ensure=PS_Match();
 				if(ensure==0x00) 
 				{
@@ -107,7 +107,7 @@ int Add_FR(uint8_t ID)
 
 			case 3:
 				LCD_Fill(0,4*16,LCD_W,5*16,WHITE);
-        		LCD_ShowChinese(0*16, 4*16, "生成指纹模板",RED,WHITE,16,0);
+        		LCD_ShowChinese(1*16, 4*16, "生成指纹模板",RED,WHITE,16,0);
 				ensure=PS_RegModel();
 				if(ensure==0x00) 
 				{
@@ -127,7 +127,7 @@ int Add_FR(uint8_t ID)
 				if(ensure==0x00) 
 				{			
 					LCD_Fill(0,4*16,LCD_W,5*16,WHITE);					
-          			LCD_ShowChinese(0*16, 4*16, "录入指纹成功",RED,WHITE,16,0);
+          			LCD_ShowChinese(1*16, 4*16, "录入指纹成功",RED,WHITE,16,0);
 					PS_ValidTempleteNum(&ValidN);//读库指纹个数
 					HAL_Delay(1500);
 					LCD_Fill(0,4*16,LCD_W,5*16,WHITE);					
@@ -139,7 +139,7 @@ int Add_FR(uint8_t ID)
 		if(i==5)//超过5次没有按手指则退出
 		{
 			LCD_Fill(0,4*16,LCD_W,5*16,WHITE);	
-			LCD_ShowChinese(0*16, 4*16, "录入指纹成功",RED,WHITE,16,0);
+			LCD_ShowChinese(1*16, 4*16, "录入指纹成功",RED,WHITE,16,0);
 			HAL_Delay(800);
 			LCD_Fill(0,4*16,LCD_W,5*16,WHITE);	
 			return -1;
@@ -167,16 +167,16 @@ int press_FR(void)
 			if(ensure==0x00)//搜索成功
 			{				
 				LCD_Fill(0,5*16,LCD_W,6*16,WHITE);
-				LCD_ShowChinese(0*16, 5*16, "刷指纹成功",RED,WHITE,16,0);			
+				LCD_ShowChinese(1.5*16, 5*16, "刷指纹成功",RED,WHITE,16,0);			
 				HAL_Delay(1000);
 				LCD_Fill(0,5*16,LCD_W,6*16,WHITE);
-				printf("序号：%d\r\n",seach.pageID);
+				printf("ID:%d\r\n",seach.pageID);
 				return seach.pageID;	
 			}
 			else
 			{ 
 				LCD_Fill(0,5*16,LCD_W,6*16,WHITE);
-				LCD_ShowChinese(0*16, 5*16, "刷指纹失败",RED,WHITE,16,0);			
+				LCD_ShowChinese(1.5*16, 5*16, "没有该用户",RED,WHITE,16,0);			
 				HAL_Delay(1000);
 				LCD_Fill(0,5*16,LCD_W,6*16,WHITE);
 				ShowErrMessage(ensure);		
@@ -186,7 +186,7 @@ int press_FR(void)
 		else
 		{
 			LCD_Fill(0,5*16,LCD_W,6*16,WHITE);
-			LCD_ShowChinese(0*16, 5*16, "刷指纹失败",RED,WHITE,16,0);			
+			LCD_ShowChinese(1.5*16, 5*16, "没有该用户",RED,WHITE,16,0);			
 			HAL_Delay(1000);
 			LCD_Fill(0,5*16,LCD_W,6*16,WHITE);
 			ShowErrMessage(ensure);
@@ -371,6 +371,8 @@ void add_people(PEOPLE_IDENTITY people_identity)
 		{
 			people[i].ID = i;
 			people[i].identity = ADMIN;
+			flash_write_people( ADDR_FLASH_PAGE_62,  ADDR_FLASH_PAGE_63, people , COUNTOF(people));
+			HAL_Delay(200);
 		}		 		
 	}
 	else if (people_identity == COMMON)
@@ -379,6 +381,8 @@ void add_people(PEOPLE_IDENTITY people_identity)
 		{
 			people[i].ID = i;
 			people[i].identity = COMMON;
+			flash_write_people( ADDR_FLASH_PAGE_62,  ADDR_FLASH_PAGE_63, people , COUNTOF(people));
+			HAL_Delay(200);
 		}	
 	}
 	
@@ -388,6 +392,7 @@ void add_people(PEOPLE_IDENTITY people_identity)
 
 void add_admin_people(void)
 {
+	
 	add_people(ADMIN);
 }
 
