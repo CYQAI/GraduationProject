@@ -61,7 +61,7 @@
 
 /* USER CODE BEGIN PV */
 /*前六位密码，第7位是否已初始化标志*/
-uint32_t password[8] = {'1','2','3','4','5','6',0,0};
+uint32_t password[8] = {'1','2','3','4','5','6',1,0};
 People people[PEOPLE_MAX_COUNT];
 int people_ID_now = 0xaaaa;  /*0xaaaaa是没有身份的标志*/
 uint32_t test[8];
@@ -153,6 +153,8 @@ int main(void)
     printf("|ID:%d,identity:%d",people[i].ID,people[i].identity);
   }
     printf("\r\n");
+
+  del_all_FR();
 
   while (1)
   {

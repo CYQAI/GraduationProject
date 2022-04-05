@@ -140,7 +140,15 @@ void first_use(void)
 
   password_ChangeOrRead(PasswordCHANGE);
 
-   password[6] = 0;
+  LCD_Fill(0,3*16,LCD_W,4*16,WHITE);
+  LCD_ShowChinese(1.5*16, 3*16, "设置管理员",RED,WHITE,16,0);
+  Add_FR(0);
+
+  people[0].ID = 0;
+  people[0].identity = ADMIN;
+
+  flash_write_people( ADDR_FLASH_PAGE_62,  ADDR_FLASH_PAGE_63, people , COUNTOF(people));
+  password[6] = 0;
   flash_write_password(ADDR_FLASH_PAGE_61, ADDR_FLASH_PAGE_62, password, COUNTOF(password));
 
   //擦除设置密码
@@ -159,6 +167,12 @@ void close_door(void)
   relay_off();
 }
 
+/**
+ * @brief 
+ * 
+ * @note 固定显示行：第2，3，7行，动态显示行：第4，5行
+ */
+
 void door_task(void)
 {
   uint8_t pass_fail_num=0;  /*密码错误的次数*/
@@ -167,7 +181,7 @@ void door_task(void)
   if (task_status !=  run_door_task)
     return;
 
-
+  LCD_Fill(0,0,LCD_W,LCD_H,WHITE);
 
   while (1)
   {
@@ -181,15 +195,15 @@ void door_task(void)
     // printf("key.num=%d,pass_fail_num=%d\r\n", key.num,pass_fail_num);
 
     /*切换到不同的状态*/
-    if (key.num>='0'&&key.num<='9')
+    if (key.num>='0'&&key.num<='9') /*密码开锁*/
     {
       password_ChangeOrRead(PasswordREAD);
     }
-    else if (key.num  =='*' )
+    else if (key.num  =='*' ) /*关门*/
     {
       close_door();
     }
-    else if (key.num  =='#')
+    else if (key.num  =='#')  /*设置*/
     {
       task_status = run_ui_task;
       LCD_Fill(0,0,LCD_W,LCD_H,WHITE);
@@ -236,13 +250,16 @@ void door_task(void)
 
     case as608_success:
       open_door();
+	    LCD_ShowChinese(0.5*16, 4*16, "登入用户",RED,WHITE,16,0);				
+	    LCD_ShowString(4.5*16, 4*16, "ID:", RED,WHITE,16,0);
+      LCD_ShowIntNum(6*16, 4*16, fr_ID, 3, RED, WHITE, 16);
+      HAL_Delay(3000);
+      LCD_Fill(0,4*16,LCD_W,5*16,WHITE);
       lock_status = lock_unkown;
       break; 
 
     case as608_fail:
-      // LCD_ShowChinese(0*16, 4*16, "没有该用户",RED,WHITE,16,0);	
-      // HAL_Delay(900);
-      // LCD_Fill(0,4*16,LCD_W,5*16,WHITE);
+      /*“没有该用户信息”提示信息在press_FR()中提示*/
       lock_status = lock_unkown;
       break; 
       

@@ -9,7 +9,6 @@
 #include "math.h"
 #include "flash.h"
 /* Private variables ---------------------------------------------------------*/
-uint8_t ensure;
 uint16_t ValidN;
 SysPara AS608Para;//指纹模块AS608参数
 
@@ -22,6 +21,8 @@ void ShowErrMessage(uint8_t ensure)
 
 void AS608_Init(void)
 {
+	uint8_t ensure;
+
     while(PS_HandShake(&AS608Addr))//与AS608模块握手
     {
         HAL_Delay(500);
@@ -41,12 +42,35 @@ void AS608_Init(void)
 		ShowErrMessage(ensure);	
 }
 
+void del_all_FR(void)
+{
+	uint8_t ensure=0;
 
+    ensure=PS_Empty();//读库指纹个数
+    if(ensure!=0x00)
+        ShowErrMessage(ensure);//显示确认码错误信息	
+
+	HAL_Delay(200);
+    ensure=PS_ValidTempleteNum(&ValidN);//读库指纹个数
+    if(ensure!=0x00)
+        ShowErrMessage(ensure);//显示确认码错误信息	
+}
+
+
+/**
+ * @brief 添加指纹，是一个状态，按返回键可以取消添加指纹
+ * 
+ * @param ID 
+ * @return int 
+ */
 int Add_FR(uint8_t ID)
 {
 	u8 i=0,ensure=0 ,processnum=0;
+	DBG_PRINTF("\r\n");
 	while(1)
 	{
+		get_key();
+
 		switch (processnum)
 		{
 			case 0:
@@ -126,25 +150,42 @@ int Add_FR(uint8_t ID)
 				ensure=PS_StoreChar(CharBuffer2,ID);//储存模板
 				if(ensure==0x00) 
 				{			
-					LCD_Fill(0,4*16,LCD_W,5*16,WHITE);					
+					LCD_Fill(0,4*16,LCD_W,5*16,WHITE);
+					LCD_Fill(0,5*16,LCD_W,6*16,WHITE);					
           			LCD_ShowChinese(1*16, 4*16, "录入指纹成功",RED,WHITE,16,0);
+					LCD_ShowChinese(1*16, 5*16, "新用户",RED,WHITE,16,0);				
+	    			LCD_ShowString(4*16, 5*16, "ID:", RED,WHITE,16,0);
+      				LCD_ShowIntNum(5.5*16, 5*16, ID, 3, RED, WHITE, 16);
 					PS_ValidTempleteNum(&ValidN);//读库指纹个数
-					HAL_Delay(1500);
-					LCD_Fill(0,4*16,LCD_W,5*16,WHITE);					
+					HAL_Delay(3000);
+					LCD_Fill(0,4*16,LCD_W,5*16,WHITE);
+					LCD_Fill(0,5*16,LCD_W,6*16,WHITE);							
 					return 0;
 				}else {processnum=0;ShowErrMessage(ensure);}					
 				break;				
 		}
-		HAL_Delay(400);
-		if(i==5)//超过5次没有按手指则退出
+
+		/**/
+		if (key.num == 'D')
 		{
-			LCD_Fill(0,4*16,LCD_W,5*16,WHITE);	
-			LCD_ShowChinese(1*16, 4*16, "录入指纹成功",RED,WHITE,16,0);
-			HAL_Delay(800);
-			LCD_Fill(0,4*16,LCD_W,5*16,WHITE);	
-			return -1;
-			break;	
-		}				
+			if ( password[6] == 1)      /*第一次初始化，不能退出*/
+			{
+
+			}
+			else if (password[6] == 0)  /*其余情况退出*/
+			{
+				return -1;
+			}			
+		}
+		// if(i==5)//超过5次没有按手指则退出
+		// {
+		// 	LCD_Fill(0,4*16,LCD_W,5*16,WHITE);	
+		// 	LCD_ShowChinese(1*16, 4*16, "录入指纹成功",RED,WHITE,16,0);
+		// 	HAL_Delay(800);
+		// 	LCD_Fill(0,4*16,LCD_W,5*16,WHITE);	
+		// 	return -1;
+		// 	break;	
+		// }				
 	}
 }
 
@@ -254,8 +295,8 @@ void del_FR(void)
 			if (!(num<=299))
 			{
 				LCD_ShowChinese(0*16, 5*16, "用户",RED,WHITE,16,0);
-				LCD_ShowString(2*16, 5*16, "ID:", RED,WHITE,16,0);
-				LCD_ShowChinese(3.5*16, 5*16, "超过范围",RED,WHITE,16,0);				
+				LCD_ShowString(2*16, 5*16, "ID", RED,WHITE,16,0);
+				LCD_ShowChinese(3*16, 5*16, "超过范围",RED,WHITE,16,0);				
 				HAL_Delay(1000);
 				LCD_Fill(0*16, 5*16, LCD_W, 6*16,WHITE);
 				goto point1;				
@@ -279,7 +320,11 @@ void del_FR(void)
 			if(ensure==0)
 			{
 				LCD_ShowChinese(0*16, 5*16, "删除指纹成功",RED,WHITE,16,0);				
+				people[num].ID = 0xaaaa;
+				people[num].identity = ID_UNKOWN;
+				flash_write_people( ADDR_FLASH_PAGE_62,  ADDR_FLASH_PAGE_63, people , COUNTOF(people));
 				HAL_Delay(1000);
+
 				LCD_Fill(0*16, 5*16, LCD_W, 6*16,WHITE);			
 			}
 			else{
@@ -292,8 +337,6 @@ point1:
 			PS_ValidTempleteNum(&ValidN);//读库指纹个数
 
 		}		
-
-
 	}
 }
 
@@ -329,13 +372,13 @@ void people_init(void)
 {
 	uint8_t i =0;
 
-	people[0].ID = 0xaaaa;
-	people[0].identity = ID_UNKOWN;
+	// people[0].ID = 0xaaaa;
+	// people[0].identity = ID_UNKOWN;
 
-	people[1].ID = 1;
-	people[1].identity = ADMIN;
+	// people[1].ID = 1;
+	// people[1].identity = ADMIN;
 
-	for ( i = 2; i < 8; i++)
+	for ( i = 0; i < PEOPLE_MAX_COUNT; i++)
 	{
 		people[i].ID = 0xaaaa;
 		people[i].identity = ID_UNKOWN;
@@ -350,6 +393,8 @@ void add_people(PEOPLE_IDENTITY people_identity)
 {
 	uint8_t i=0;
 
+
+
 	for (i = 0; i < PEOPLE_MAX_COUNT; i++)
 	{
 		if (people[i].ID == 0xaaaa)	/*找到没有占领的位置*/
@@ -358,13 +403,13 @@ void add_people(PEOPLE_IDENTITY people_identity)
 
 	if (i == PEOPLE_MAX_COUNT)
 	{							
-		LCD_ShowChinese(0*16, 4*16, "人员已满",RED,WHITE,16,0);
-		HAL_Delay(800);
+		LCD_ShowChinese(2*16, 4*16, "人员已满",RED,WHITE,16,0);
+		HAL_Delay(1000);
 		LCD_Fill(0,4*16,LCD_W,5*16,WHITE);
 		return;
 	}
 	
-
+	DBG_PRINTF("i=%d",i);
 	if (people_identity == ADMIN)
 	{
 		if (Add_FR(i) == 0)	/*成功添加指纹*/
@@ -421,7 +466,9 @@ void show_people(PEOPLE_IDENTITY people_identity)
 
 		if (people_identity == ADMIN && flag == 1)
 		{
-			LCD_ShowChinese(0*16, 0*16, "管理员",RED,WHITE,16,0);
+			LCD_ShowChinese(2*16, 0*16, "管理员",RED,WHITE,16,0);
+			LCD_ShowString(5*16, 0*16, "ID", RED,WHITE,16,0);
+
 			for (i = 0; i < PEOPLE_MAX_COUNT; i++)
 			{
 				if (people[i].identity == ADMIN)
@@ -435,7 +482,8 @@ void show_people(PEOPLE_IDENTITY people_identity)
 		}
 		else if (people_identity == COMMON && flag ==1 ) 
 		{
-			LCD_ShowChinese(0*16, 0*16, "普通用户",RED,WHITE,16,0);
+			LCD_ShowChinese(1.5*16, 0*16, "普通用户",RED,WHITE,16,0);
+			LCD_ShowString(5.5*16, 0*16, "ID", RED,WHITE,16,0);			
 			for (i = 0; i < PEOPLE_MAX_COUNT; i++)
 			{
 				if (people[i].identity == COMMON)

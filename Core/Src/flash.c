@@ -113,7 +113,7 @@ void flash_init(void)
 void flash_write_people(uint32_t start_address, uint32_t end_adress, People from[], uint8_t size)
 {
   // uint32_t Address = 0;
-
+  DBG_PRINTF("\r\n");
     /*size数值不是4的倍数返回*/
   HAL_FLASH_Unlock();
 

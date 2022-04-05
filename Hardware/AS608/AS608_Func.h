@@ -27,7 +27,7 @@ void add_admin_people(void);
 void add_common_people(void);
 void show_admin_people(void);
 void show_common_people(void);
-
+void del_all_FR(void);
 
 #ifdef __cplusplus
 }

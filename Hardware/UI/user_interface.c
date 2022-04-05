@@ -199,7 +199,6 @@ void draw_list()
     screen_clear();
 
     draw_title();
-    printf("33333333333333");
     for(;i<main_page->count;i++)
         update_item(main_page->list[i]);
 }
@@ -460,9 +459,9 @@ end:
                                        
                 }else
                 {
-                    LCD_ShowChinese(0*16, 6*16, "没有该用户",RED,WHITE,16,0);
-                    HAL_Delay(800);
-                    LCD_Fill(0,6*16,LCD_W,7*16,WHITE);               
+                    // LCD_ShowChinese(0*16, 6*16, "没有该用户",RED,WHITE,16,0);
+                    // HAL_Delay(800);
+                    // LCD_Fill(0,6*16,LCD_W,7*16,WHITE);               
                 }
            
             }

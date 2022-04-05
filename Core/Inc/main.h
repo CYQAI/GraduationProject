@@ -66,6 +66,18 @@ extern int people_ID_now;
 #define FLASH_INIT 0
 #define PEOPLE_MAX_COUNT  10
 
+#define  DEBUG   1  
+
+#if DEBUG
+  #define DBG_PRINTF(fmt, ...)  \
+  do\
+  {\
+      printf("<<File:%s  Line:%d  Function:%s>> \r\n", __FILE__, __LINE__, __FUNCTION__);\
+      printf(fmt, ##__VA_ARGS__);\
+  }while(0)
+#else
+  #define DBG_PRINTF(fmt, args...)   
+#endif
 
 /* USER CODE END EM */
 
